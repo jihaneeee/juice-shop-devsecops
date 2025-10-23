@@ -5,41 +5,40 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-
+    
 jobs:
   analyze:
+    name: Analyze Code
     runs-on: ubuntu-latest
     permissions:
       actions: read
       contents: read
       security-events: write
-      id-token: write
-
+    strategy:
+      matrix:
+        language: [ 'javascript' ]
+        
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '20'  # ✅ Mise à jour obligatoire pour Angular
-
+      uses: actions/checkout@v3
+  
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v3
+      uses: github/codeql-action/init@v2
       with:
-        languages: javascript
-
-    - name: Install dependencies
-      run: npm install
-
-    # Option : ignorer complètement la build Angular pour éviter les crashs
+        languages: ${{ matrix.language }}
+        queries: security-and-quality
+      
+    - name: Autobuild
+      uses: github/codeql-action/autobuild@v2
+    
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v3
+      uses: github/codeql-action/analyze@v2
       with:
-        output: results.sarif
-
-    - name: Upload CodeQL results as artifact
-      uses: actions/upload-artifact@v4
+        category: "/language:${{ matrix.language }}"
+      
+    - name: Upload CodeQL Results
+      uses: actions/upload-artifact@v3
       with:
+    
         name: codeql-results
-        path: results.sarif
+        path: /home/runner/work/_temp/codeql_databases/
